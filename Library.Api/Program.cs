@@ -16,13 +16,13 @@ app.UseHttpsRedirection();
 
 app.Run();
 
-public partial class Program
-{
-    
-}
+public partial class Program;
 
-public class Book(string Title, string Reference)
+public class Book(string title, string isbn)
 {
+    public Guid Id { get; set; }
+    public string Title { get; set; } = title;
+    public string Isbn { get; set; } = isbn;
     public bool IsCheckedOut { get; set; }
     
     public void CheckOut()
@@ -43,7 +43,19 @@ public class Book(string Title, string Reference)
         IsCheckedOut = false;
     }
 
-    public class BookUnavailableException : Exception
-    {
-    }
+    public class BookUnavailableException : Exception;
+    public class DuplicateIsbnException : Exception;
+    public class BookNotFoundException : Exception;
+    public class BookLimitExceededException : Exception;
+}
+
+public class Member(string name)
+{
+    public static int MaxConcurrentBooks = 3;
+    
+    public Guid Id { get; set; }
+    public string Name { get; set; } = name;
+
+    public int AvailableCheckoutCount => MaxConcurrentBooks - CheckedOutBooks.Count;
+    public ICollection<Book> CheckedOutBooks { get; set; } = new List<Book>();
 }
