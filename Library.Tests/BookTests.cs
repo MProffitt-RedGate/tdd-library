@@ -25,7 +25,8 @@ public class BookTests
         var book = new Book("Refactoring", "123-456789");
         book.CheckOut();
 
-        Assert.Throws<Book.BookUnavailableException>(book.CheckOut);
+        Action act = book.CheckOut;
+        act.Should().ThrowExactly<Book.BookUnavailableException>();
     }
     
     [Fact]
@@ -43,6 +44,7 @@ public class BookTests
     {
         var book = new Book("Refactoring", "123-456789");
 
-        Assert.Throws<InvalidOperationException>(book.Return);
+        Action act = book.Return;
+        act.Should().ThrowExactly<InvalidOperationException>();
     }
 }

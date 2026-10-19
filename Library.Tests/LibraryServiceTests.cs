@@ -1,4 +1,5 @@
 ﻿using FluentAssertions;
+using FluentAssertions.Execution;
 using Library.Api.Services;
 using NSubstitute;
 
@@ -9,16 +10,17 @@ public class LibraryServiceTests
     private LibraryService BuildService(Member? member = null)
     {
         var userContext = Substitute.For<IUserContext>();
+        var bookRepository = Substitute.For<IBookRepository>();
 
         if (member != null)
         {
             userContext.Member.Returns(member);
         }
-        return new LibraryService(new InMemoryBookRepository(), userContext);
+        return new LibraryService(bookRepository, userContext);
     }
     
     [Fact]
-    public void AddBook_ShouldReturnBookId()
+    public void AddBook_ShouldUpdateBookId()
     {
         var book = new Book("Test Book", "1234");
 
@@ -31,13 +33,20 @@ public class LibraryServiceTests
     [Fact]
     public void AddBookWithDuplicateIsbn_ShouldThrowDuplicateIsbnException()
     {
-        var book = new Book("Test Book", "1234");
         var duplicateBook = new Book("Test Book 2", "1234");
 
-        var service = BuildService();
-        service.AddBook(book);
+        var userContext = Substitute.For<IUserContext>();
+        var bookRepository = Substitute.For<IBookRepository>();
+        bookRepository.Exists(Arg.Any<Predicate<Book>>()).Returns(true);
         
-        Assert.Throws<Book.DuplicateIsbnException>(() => service.AddBook(duplicateBook));
+        var service = new LibraryService(bookRepository, userContext);
+        
+        Action act = () => service.AddBook(duplicateBook);
+        act.Should().ThrowExactly<Book.DuplicateIsbnException>();
+        
+        bookRepository.Received(1).Exists(Arg.Any<Predicate<Book>>());
+        bookRepository.DidNotReceive().Add(Arg.Any<Book>());
+        duplicateBook.Id.Should().BeEmpty();
     }
     
     [Fact]
@@ -48,13 +57,18 @@ public class LibraryServiceTests
         
         var service = BuildService(member);
         
-        Assert.Throws<Book.BookNotFoundException>(() => service.Checkout(bookId));
+        Action act = () => service.Checkout(bookId);
+        act.Should().ThrowExactly<Book.BookNotFoundException>();
     }
     
     [Fact]
     public void CheckoutForMemberWith2OrLessBooks_ShouldAddToMembersBooks()
     {
-        var newBook = new Book("New Book", "new-book");
+        var newBook = new Book("New Book", "new-book")
+        {
+            Id = Guid.NewGuid()
+        };
+        
         var member = new Member("John Smith")
         {
             CheckedOutBooks = new List<Book>()
@@ -63,14 +77,23 @@ public class LibraryServiceTests
                 new("Test Book 2", "2")
             }
         };
-
-        var service = BuildService(member);
-
-        service.AddBook(newBook);
-        service.Checkout(newBook.Id);
         
-        member.AvailableCheckoutCount.Should().Be(0);
-        member.CheckedOutBooks.Count.Should().Be(3);
+        var userContext = Substitute.For<IUserContext>();
+        userContext.Member.Returns(member);
+        
+        var bookRepository = Substitute.For<IBookRepository>();
+        bookRepository.GetByIdOrDefault(newBook.Id).Returns(newBook);
+        
+        var service = new LibraryService(bookRepository, userContext);
+
+        service.Checkout(newBook.Id);
+
+        // Useful, because it shows all failures, not just the one in sequence
+        using (new AssertionScope())
+        {
+            member.AvailableCheckoutCount.Should().Be(0);
+            member.CheckedOutBooks.Count.Should().Be(3);
+        }
     }
     
     [Fact]
@@ -91,10 +114,50 @@ public class LibraryServiceTests
             }
         };
         
-        var service = BuildService(member);
+        var userContext = Substitute.For<IUserContext>();
+        userContext.Member.Returns(member);
+        
+        var bookRepository = Substitute.For<IBookRepository>();
+        bookRepository.GetByIdOrDefault(newBook.Id).Returns(newBook);
+        
+        var service = new LibraryService(bookRepository, userContext);
 
         member.AvailableCheckoutCount.Should().Be(0);
-        Assert.Throws<Book.BookLimitExceededException>(() => service.Checkout(newBook.Id));
+        
+        Action act = () => service.Checkout(newBook.Id);
+        act.Should().ThrowExactly<Book.BookLimitExceededException>();
+    }
+    
+    [Fact]
+    public void CheckoutForMemberWithSameBook_ShouldThrowBookUnavailableException()
+    {
+        var bookToCheckout = new Book("New Book", "new-book")
+        {
+            Id = Guid.NewGuid()
+        };
+
+        var member = new Member("John Smith")
+        {
+            CheckedOutBooks = new List<Book>()
+            {
+                new("Test Book 1", "1"),
+                bookToCheckout
+            }
+        };
+        
+        
+        var userContext = Substitute.For<IUserContext>();
+        userContext.Member.Returns(member);
+        
+        var bookRepository = Substitute.For<IBookRepository>();
+        bookRepository.GetByIdOrDefault(bookToCheckout.Id).Returns(bookToCheckout);
+        
+        var service = new LibraryService(bookRepository, userContext);
+        
+        Action act = () => service.Checkout(bookToCheckout.Id);
+        act.Should().ThrowExactly<Book.BookUnavailableException>();
+        
+        member.CheckedOutBooks.Should().Contain(bookToCheckout);
     }
     
     [Fact]
@@ -140,6 +203,7 @@ public class LibraryServiceTests
         
         var service = BuildService(member);
         
-        Assert.Throws<Book.BookNotFoundException>(() => service.Return(otherBook.Id));
+        Action act = () => service.Return(otherBook.Id);
+        act.Should().ThrowExactly<Book.BookNotFoundException>();
     }
 }

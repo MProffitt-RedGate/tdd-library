@@ -28,6 +28,12 @@ public class LibraryService(IBookRepository bookRepository, IUserContext userCon
             throw new Book.BookNotFoundException();
         }
         
+        var alreadyHasBook = userContext.Member.CheckedOutBooks.Any(b => b.Id == bookId);
+        if (alreadyHasBook)
+        {
+            throw new Book.BookUnavailableException();
+        }
+        
         userContext.Member.CheckedOutBooks.Add(book);
         return book;
     }

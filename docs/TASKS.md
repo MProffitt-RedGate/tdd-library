@@ -21,9 +21,9 @@ Ground rules:
 
 ## Progress
 
-- [ ] Migrate assertions to FluentAssertions
+- [x] Migrate assertions to FluentAssertions
 - [ ] Close the checkout gaps
-- [ ] Substitute the repository
+- [x] Substitute the repository
 - [ ] Make the repository seam mockable
 - [ ] Search the catalogue
 - [ ] Inject the loan policy
@@ -60,9 +60,9 @@ Ground rules:
 
 **Learning goals**
 
-- [ ] Use `Action act = ...; act.Should().Throw<T>()` and `Invoking`
-- [ ] Explain `Throw<T>` vs `ThrowExactly<T>`
-- [ ] Add `.WithMessage(...)` to an assertion (you'll need messages in Task 2)
+- [x] Use `Action act = ...; act.Should().Throw<T>()` and `Invoking`
+- [x] Explain `Throw<T>` vs `ThrowExactly<T>`
+- [x] Add `.WithMessage(...)` to an assertion (you'll need messages in Task 2)
 
 ---
 
@@ -86,10 +86,10 @@ Ground rules:
 
 **Learning goals**
 
-- [ ] Write a test that fails because of a *missing* behaviour, not a compile error
-- [ ] Assert state with `Should().BeTrue()`, `HaveCount`, `Contain`, `NotContain`
-- [ ] Use an `AssertionScope` to check several properties of the result at once
-- [ ] Re-point a substituted property: `userContext.Member.Returns(otherMember)`
+- [x] Write a test that fails because of a *missing* behaviour, not a compile error
+- [x] Assert state with `Should().BeTrue()`, `HaveCount`, `Contain`, `NotContain`
+- [x] Use an `AssertionScope` to check several properties of the result at once
+- [x] Re-point a substituted property: `userContext.Member.Returns(otherMember)`
 
 ---
 
@@ -110,10 +110,10 @@ Ground rules:
 
 **Learning goals**
 
-- [ ] `Substitute.For`, `Returns`, `Received(n)`, `DidNotReceive`
-- [ ] `Arg.Any<T>()` vs `Arg.Is<T>(predicate)` vs `Arg.Do<T>(action)`
-- [ ] Say when a state-based test (real in-memory repo) beats an interaction test, and when it doesn't
-- [ ] Explain why you can't substitute `Book` or `Member`
+- [x] `Substitute.For`, `Returns`, `Received(n)`, `DidNotReceive`
+- [x] `Arg.Any<T>()` vs `Arg.Is<T>(predicate)` vs `Arg.Do<T>(action)`
+- [x] Say when a state-based test (real in-memory repo) beats an interaction test, and when it doesn't
+- [x] Explain why you can't substitute `Book` or `Member`
 
 ---
 
